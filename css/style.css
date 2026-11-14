@@ -1,0 +1,567 @@
+/* ================================================================
+   ARISE — css/style.css
+   All design tokens, layout, and base component styles.
+   Mobile-first at 360 px. Tap targets ≥ 44 px.
+   ================================================================ */
+
+/* ── Design Tokens ─────────────────────────────────────────────── */
+:root {
+  /* Core palette */
+  --bg:      #05070d;
+  --panel:   #0b1220cc;    /* semi-transparent for backdrop-filter */
+  --line:    #1e3a5f;
+  --glow:    #38bdf8;
+  --text:    #e6f1ff;
+  --muted:   #7a8ba3;
+  --danger:  #ef4444;
+  --gold:    #fbbf24;
+
+  /* Pillar accent colors */
+  --col-int: #38bdf8;   /* College / INT  – blue   */
+  --col-skl: #a78bfa;   /* Skill   / SKL  – purple */
+  --col-str: #f87171;   /* Physical/ STR  – red    */
+  --col-spi: #fbbf24;   /* Spirit  / SPI  – gold   */
+
+  /* Layout */
+  --radius:     4px;
+  --tap:        44px;      /* minimum tap target height */
+  --nav-h:      60px;
+
+  /* iOS safe areas (env() falls back to 0px on non-notch devices) */
+  --safe-top:    env(safe-area-inset-top,    0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ── Reset ─────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+button, input, textarea, select { font: inherit; }
+img, svg { display: block; }
+a { color: inherit; text-decoration: none; }
+
+/* ── Base / Typography ─────────────────────────────────────────── */
+html { height: 100%; }
+
+body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  /* Orbitron/Rajdhani are Google Fonts; fall back gracefully to system-ui */
+  font-family: 'Rajdhani', 'Orbitron', system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Subtle scanline texture over the whole viewport */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.07) 2px,
+    rgba(0, 0, 0, 0.07) 4px
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+h1, h2, h3 {
+  font-family: 'Orbitron', 'Rajdhani', system-ui, sans-serif;
+  letter-spacing: 0.05em;
+  line-height: 1.25;
+}
+h1 { font-size: 1.5rem; }
+h2 { font-size: 1.2rem; }
+h3 { font-size: 1rem;   }
+
+.mono { font-family: 'Courier New', Courier, monospace; }
+
+/* ── App Shell ─────────────────────────────────────────────────── */
+#app {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+  /* Use dynamic viewport height so iOS bottom bar is handled correctly */
+  height: 100vh;        /* safe fallback */
+  height: 100dvh;       /* modern browsers */
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+/* Main scrollable area */
+.screen-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Top: status-bar inset + a little breathing room */
+  padding: calc(var(--safe-top) + 14px) 12px 16px;
+  position: relative;
+  z-index: 1;
+  /* Smooth momentum scroll on iOS */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Panels ─────────────────────────────────────────────────────── */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 0 12px rgba(56, 189, 248, .15),
+              inset 0 0 1px rgba(56, 189, 248, .05);
+  padding: 16px;
+  margin-bottom: 12px;
+  position: relative;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Panel with top-right cut corner */
+.panel-cut {
+  clip-path: polygon(
+    0 0,
+    calc(100% - 14px) 0,
+    100% 14px,
+    100% 100%,
+    0 100%
+  );
+}
+
+/* System message label (top of a panel or screen) */
+.system-label {
+  font-family: 'Orbitron', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--glow);
+  margin-bottom: 10px;
+  opacity: 0.9;
+}
+
+/* ── Color Utilities ────────────────────────────────────────────── */
+.muted        { color: var(--muted);    }
+.text-glow    { color: var(--glow);     }
+.text-gold    { color: var(--gold);     }
+.text-danger  { color: var(--danger);   }
+.text-int     { color: var(--col-int);  }
+.text-skl     { color: var(--col-skl);  }
+.text-str     { color: var(--col-str);  }
+.text-spi     { color: var(--col-spi);  }
+
+/* ── Buttons ────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: var(--tap);
+  padding: 8px 20px;
+  border: 1px solid var(--glow);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--glow);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+.btn:active {
+  background: rgba(56, 189, 248, .18);
+  box-shadow: 0 0 18px rgba(56, 189, 248, .5);
+  transform: scale(0.97);
+}
+
+.btn-primary {
+  background: rgba(56, 189, 248, .08);
+  box-shadow: 0 0 8px rgba(56, 189, 248, .18);
+}
+
+.btn-danger  { border-color: var(--danger); color: var(--danger); }
+.btn-danger:active {
+  background: rgba(239, 68, 68, .18);
+  box-shadow: 0 0 18px rgba(239, 68, 68, .5);
+}
+
+.btn-gold    { border-color: var(--gold); color: var(--gold); }
+.btn-gold:active {
+  background: rgba(251, 191, 36, .18);
+  box-shadow: 0 0 18px rgba(251, 191, 36, .5);
+}
+
+.btn-full    { width: 100%; }
+
+/* Small icon-only button (e.g. modal close ✕) */
+.btn-icon {
+  min-height: auto;
+  min-width: auto;
+  padding: 5px 9px;
+  font-size: 0.75rem;
+  letter-spacing: 0;
+}
+
+/* ── Progress Bars ──────────────────────────────────────────────── */
+.bar-wrap {
+  width: 100%;
+  height: 8px;
+  background: rgba(30, 58, 95, .45);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--glow);
+  transition: width 0.6s ease;
+  box-shadow: 0 0 6px currentColor;
+}
+
+/* Pillar-coloured variants */
+.bar-fill.int { background: var(--col-int); }
+.bar-fill.skl { background: var(--col-skl); }
+.bar-fill.str { background: var(--col-str); }
+.bar-fill.spi { background: var(--col-spi); }
+
+/* Stamina bar */
+.bar-fill.stamina { background: var(--gold); }
+
+/* Size variants */
+.bar-wrap.bar-lg { height: 14px; }
+.bar-wrap.bar-xl { height: 20px; border-radius: 6px; }
+.bar-wrap.bar-xl .bar-fill { border-radius: 6px; }
+
+/* ── Modal ──────────────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 7, 13, .88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  animation: fadeIn 0.2s ease;
+}
+.modal-overlay.hidden { display: none; }
+
+.modal-box {
+  background: #0d1829;
+  border: 1px solid var(--glow);
+  border-radius: var(--radius);
+  box-shadow: 0 0 36px rgba(56, 189, 248, .35);
+  width: 100%;
+  max-width: 380px;
+  max-height: 80vh;
+  overflow-y: auto;
+  animation: slideUp 0.25s ease;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.modal-title {
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--glow);
+}
+.modal-body   { padding: 20px 18px; }
+.modal-footer {
+  padding: 12px 18px 16px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+/* ── Toasts ─────────────────────────────────────────────────────── */
+.toast-container {
+  position: fixed;
+  top: calc(var(--safe-top) + 14px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+  width: calc(100% - 32px);
+  max-width: 400px;
+}
+
+.toast {
+  padding: 11px 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: #0d1829;
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, .5);
+  /* slide in then fade out */
+  animation: toastIn 0.3s ease, toastOut 0.3s ease var(--toast-delay, 2.7s) forwards;
+}
+.toast.info    { border-color: var(--glow);   box-shadow: 0 0 12px rgba(56,189,248,.3); }
+.toast.success { border-color: #22c55e;        box-shadow: 0 0 12px rgba(34,197,94,.3);  }
+.toast.error   { border-color: var(--danger);  box-shadow: 0 0 12px rgba(239,68,68,.3);  }
+.toast.gold    { border-color: var(--gold);    color: var(--gold);
+                 box-shadow: 0 0 12px rgba(251,191,36,.3); }
+
+/* ── Bottom Navigation ──────────────────────────────────────────── */
+.bottom-nav {
+  /* flex-shrink:0 so it never gets squashed by the screen content */
+  flex-shrink: 0;
+  display: flex;
+  align-items: stretch;
+  height: calc(var(--nav-h) + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+  background: rgba(11, 18, 32, .97);
+  border-top: 1px solid var(--line);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: var(--tap);
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  transition: color 0.2s ease;
+  padding: 6px 4px;
+}
+
+.nav-icon {
+  width: 22px;
+  height: 22px;
+  transition: filter 0.2s ease;
+}
+
+.nav-btn.active {
+  color: var(--glow);
+}
+.nav-btn.active .nav-icon {
+  filter: drop-shadow(0 0 5px var(--glow));
+}
+.nav-btn:active { color: var(--text); }
+
+/* ── Stat Rows ──────────────────────────────────────────────────── */
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 0.875rem;
+}
+.stat-label {
+  color: var(--muted);
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+}
+.stat-value {
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 700;
+}
+
+/* ── Section Headers & Dividers ─────────────────────────────────── */
+.section-title {
+  font-family: 'Orbitron', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+
+/* ── Badges ─────────────────────────────────────────────────────── */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 2px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.badge-rank {
+  border: 1px solid var(--glow);
+  color: var(--glow);
+  background: rgba(56, 189, 248, .1);
+}
+
+/* ── Utility Classes ─────────────────────────────────────────────── */
+.hidden        { display: none !important; }
+.flex          { display: flex; }
+.flex-col      { flex-direction: column; }
+.flex-between  { display: flex; justify-content: space-between; align-items: center; }
+.flex-center   { display: flex; justify-content: center; align-items: center; }
+.gap-8         { gap: 8px; }
+.gap-12        { gap: 12px; }
+.gap-16        { gap: 16px; }
+.mb-8          { margin-bottom: 8px; }
+.mb-12         { margin-bottom: 12px; }
+.mb-16         { margin-bottom: 16px; }
+.mt-8          { margin-top: 8px; }
+.w-full        { width: 100%; }
+.text-center   { text-align: center; }
+.text-right    { text-align: right; }
+.text-sm       { font-size: 0.875rem; }
+.text-xs       { font-size: 0.75rem; }
+
+/* ── XP Float-up Number ─────────────────────────────────────────── */
+.xp-float {
+  position: fixed;
+  font-family: 'Orbitron', monospace;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--gold);
+  pointer-events: none;
+  z-index: 1500;
+  transform: translateX(-50%);
+  animation: floatUp 1.2s ease forwards;
+}
+
+/* ── PIN Screen ──────────────────────────────────────────────────── */
+.pin-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 999;
+}
+.pin-panel     { width: 100%; max-width: 320px; text-align: center; }
+.pin-display   {
+  font-family: 'Orbitron', monospace;
+  font-size: 2rem;
+  letter-spacing: 0.5em;
+  color: var(--glow);
+  padding: 16px 0;
+  margin: 10px 0;
+}
+.pin-pad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 14px;
+}
+.pin-key {
+  min-height: 54px;
+  background: rgba(30, 58, 95, .25);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: 'Orbitron', monospace;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+.pin-key:active {
+  background: rgba(56, 189, 248, .22);
+  box-shadow: 0 0 10px rgba(56, 189, 248, .4);
+}
+
+/* ── Placeholder (pre-build screens) ────────────────────────────── */
+.placeholder-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 55vh;
+  text-align: center;
+  gap: 10px;
+  padding: 20px;
+}
+.placeholder-screen h2  { color: var(--muted); font-size: 1rem; }
+.placeholder-screen p   { color: var(--muted); font-size: 0.85rem; }
+
+/* ── Scrollbar (webkit) ─────────────────────────────────────────── */
+::-webkit-scrollbar       { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+
+/* ── Keyframe Animations ────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes toastOut {
+  from { opacity: 1; }
+  to   { opacity: 0; transform: translateY(-8px); }
+}
+
+@keyframes floatUp {
+  0%   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-44px); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-8px); }
+  40%       { transform: translateX(8px); }
+  60%       { transform: translateX(-4px); }
+  80%       { transform: translateX(4px); }
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(56, 189, 248, .25); }
+  50%       { box-shadow: 0 0 22px rgba(56, 189, 248, .6); }
+}
+
+@keyframes barFillAnim {
+  from { width: 0; }
+}
+
+/* Reusable animation helper classes */
+.anim-shake    { animation: shake 0.5s ease; }
+.anim-glow     { animation: glowPulse 2s ease infinite; }
