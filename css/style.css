@@ -565,3 +565,219 @@ h3 { font-size: 1rem;   }
 /* Reusable animation helper classes */
 .anim-shake    { animation: shake 0.5s ease; }
 .anim-glow     { animation: glowPulse 2s ease infinite; }
+
+
+/* ================================================================
+   PHASE 1 — Status Screen styles
+   ================================================================ */
+
+/* ── Identity card ──────────────────────────────────────────── */
+.status-identity { text-align: center; padding: 8px 4px 12px; }
+
+.avatar-container {
+  width: 110px;
+  height: 155px;
+  margin: 0 auto 14px;
+}
+.avatar-svg { width: 100%; height: 100%; }
+
+.hunter-name {
+  font-family: 'Orbitron', monospace;
+  font-size: 1.3rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  margin-bottom: 8px;
+}
+
+.hunter-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.hunter-level-num {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.85rem;
+  color: var(--glow);
+}
+.hunter-level-num strong {
+  font-size: 1.1rem;
+}
+
+.equipped-title {
+  font-size: 0.75rem;
+  color: var(--gold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 4px;
+  opacity: 0.9;
+}
+
+/* ── Perfect-day pips ───────────────────────────────────────── */
+.perfect-pips {
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 0 4px;
+}
+
+.pip-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.pip-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+  transition: border-color 0.4s ease, box-shadow 0.4s ease, color 0.4s ease;
+}
+
+/* met state — pillar reached Standard or Elite today */
+.pip-circle.int { }  /* color set inline via text-${cls} helper */
+.pip-circle.met.int { color: var(--col-int); border-color: var(--col-int);
+                      box-shadow: 0 0 10px var(--col-int); }
+.pip-circle.met.skl { color: var(--col-skl); border-color: var(--col-skl);
+                      box-shadow: 0 0 10px var(--col-skl); }
+.pip-circle.met.str { color: var(--col-str); border-color: var(--col-str);
+                      box-shadow: 0 0 10px var(--col-str); }
+.pip-circle.met.spi { color: var(--col-spi); border-color: var(--col-spi);
+                      box-shadow: 0 0 10px var(--col-spi); }
+
+.pip-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+/* ── Stamina label ──────────────────────────────────────────── */
+.stamina-status-label {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+/* ── Pillar XP cards ────────────────────────────────────────── */
+.pillar-card {
+  padding: 14px 16px;
+  border-left: 3px solid var(--line);
+  transition: border-color 0.3s ease;
+}
+
+.pillar-card.int { border-left-color: var(--col-int); }
+.pillar-card.skl { border-left-color: var(--col-skl); }
+.pillar-card.str { border-left-color: var(--col-str); }
+.pillar-card.spi { border-left-color: var(--col-spi); }
+
+.pillar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.pillar-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+}
+
+.pillar-level {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.pillar-xp-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+
+.pillar-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.streak-label {
+  font-size: 0.78rem;
+  color: var(--text);
+}
+
+/* ── Tier badges ────────────────────────────────────────────── */
+.tier-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 2px;
+  border: 1px solid;
+}
+
+.tier-none     { color: var(--muted);    border-color: var(--line);    }
+.tier-minimum  { color: var(--col-int);  border-color: var(--col-int); }
+.tier-standard { color: var(--gold);     border-color: var(--gold);    }
+.tier-elite    { color: var(--col-spi);  border-color: var(--col-spi); }
+
+/* ── Exam countdown ─────────────────────────────────────────── */
+.exam-countdown { text-align: center; padding: 6px 0; }
+
+.exam-days-num {
+  font-family: 'Orbitron', monospace;
+  font-size: 3rem;
+  font-weight: 900;
+  color: var(--gold);
+  line-height: 1;
+  text-shadow: 0 0 20px rgba(251,191,36,.4);
+}
+
+.exam-raid-active {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 4px 12px;
+  border: 1px solid var(--glow);
+  border-radius: 2px;
+  background: rgba(56,189,248,.08);
+  color: var(--glow);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  box-shadow: 0 0 8px rgba(56,189,248,.2);
+}
+
+/* ── Penalty banner ─────────────────────────────────────────── */
+.penalty-banner {
+  border-color: var(--danger);
+  box-shadow: 0 0 14px rgba(239,68,68,.2), inset 0 0 1px rgba(239,68,68,.1);
+  animation: glowDanger 2s ease infinite;
+}
+
+.penalty-banner .system-label { color: var(--danger); }
+
+@keyframes glowDanger {
+  0%, 100% { box-shadow: 0 0 10px rgba(239,68,68,.2); }
+  50%       { box-shadow: 0 0 24px rgba(239,68,68,.5); }
+}

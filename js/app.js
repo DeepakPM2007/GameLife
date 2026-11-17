@@ -4,6 +4,7 @@
    ================================================================ */
 
 import { loadState, saveState, ensureTodayEntry } from './store.js';
+import { rollover } from './engine.js';
 import { renderStatus  } from './ui/status.js';
 import { renderQuests  } from './ui/quests.js';
 import { renderTrain   } from './ui/train.js';
@@ -38,6 +39,7 @@ function boot() {
 
   // Ensure today's day entry exists before anything renders
   ensureTodayEntry(state);
+  rollover(state);   // process missed days, regen stamina, update streaks/penalty
   persist();
 
   // Wire nav buttons and browser back/forward
