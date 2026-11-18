@@ -1112,3 +1112,36 @@ h3 { font-size: 1rem;   }
 }
 .btn-gold:hover { background: rgba(251,191,36,.25); }
 .mt-8 { margin-top: 8px; }
+
+
+/* ================================================================
+   PHASE 2 FIX — Avatar + confirm modal tweaks
+   ================================================================ */
+
+/* Bigger avatar canvas for new detailed SVG */
+.avatar-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  padding: 8px 0 0;
+}
+.avatar-svg {
+  width: 160px;
+  height: 220px;
+  filter: drop-shadow(0 0 18px rgba(56,189,248,.18));
+  overflow: visible;
+}
+
+/* Confirm modal body tweaks */
+.modal-body .panel {
+  margin: 0;
+}
+
+/* Stop & Log button — gold outline, legible icon */
+.btn-gold {
+  background: rgba(251,191,36,.12);
+  border: 1.5px solid var(--gold);
+  color: var(--gold);
+  font-weight: 700;
+}
+.btn-gold:active { background: rgba(251,191,36,.25); }

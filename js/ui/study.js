@@ -1,5 +1,5 @@
-/* ================================================================
-   js/ui/study.js — Phase 2: Focus Timer + Study Interface
+﻿/* ================================================================
+   js/ui/study.js â€” Phase 2: Focus Timer + Study Interface
    Wall-clock timer (accurate even when throttled).
    Sub-tabs: College (focus + exams) | Skill (focus).
    ================================================================ */
@@ -8,7 +8,7 @@ import { logFocusMinutes, FOCUS_THRESH } from '../engine.js';
 import { showToast, showLevelUp, vibrate } from './components.js';
 import { getToday } from '../store.js';
 
-/* ── Module-level timer state (NOT persisted to localStorage) ────── */
+/* â”€â”€ Module-level timer state (NOT persisted to localStorage) â”€â”€â”€â”€â”€â”€ */
 // Using wall-clock _startAt so the timer is accurate even when the
 // browser throttles setInterval on background tabs.
 let timer = {
@@ -21,21 +21,21 @@ let timer = {
 };
 
 let activeSubTab    = 'college'; // current sub-tab
-let displayInterval = null;      // DOM refresh interval — cleared on re-render
+let displayInterval = null;      // DOM refresh interval â€” cleared on re-render
 
-/* ── Helpers ─────────────────────────────────────────────────────── */
+/* â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function formatTime(totalSeconds) {
   const m = Math.floor(totalSeconds / 60);
   const s = totalSeconds % 60;
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-/* ── Focus progress summary row ──────────────────────────────────── */
+/* â”€â”€ Focus progress summary row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function focusSummaryRow(pillar, mins) {
   const thresh = FOCUS_THRESH[pillar] ?? {};
   const max    = thresh.elite  ?? 180;
   const pct    = Math.min(100, Math.round((mins / max) * 100));
-  const labels = { college: 'INT · College', skill: 'SKL · Skill' };
+  const labels = { college: 'INT Â· College', skill: 'SKL Â· Skill' };
   const colors = { college: 'var(--col-int)', skill: 'var(--col-skl)' };
 
   return `
@@ -48,7 +48,7 @@ function focusSummaryRow(pillar, mins) {
   </div>`;
 }
 
-/* ── Exam management (College sub-tab) ───────────────────────────── */
+/* â”€â”€ Exam management (College sub-tab) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function collegeContent(appState) {
   const exams = appState.exams ?? [];
   const today = getToday();
@@ -64,9 +64,9 @@ function collegeContent(appState) {
       </div>
       <span class="exam-countdown ${urgent ? 'urgent' : 'muted'} text-xs">
         ${diff < 0 ? 'Past' : diff === 0 ? 'TODAY' : diff + 'd'}
-        ${urgent && diff >= 0 ? '🔥' : ''}
+        ${urgent && diff >= 0 ? 'ðŸ”¥' : ''}
       </span>
-      <button class="btn btn-icon" data-del-exam="${e.id}" aria-label="Remove exam">✕</button>
+      <button class="btn btn-icon" data-del-exam="${e.id}" aria-label="Remove exam">âœ•</button>
     </div>`;
   }).join('') || '<p class="muted text-xs" style="margin:8px 0">No exams added. Add one below.</p>';
 
@@ -82,12 +82,12 @@ function collegeContent(appState) {
   </div>`;
 }
 
-/* ── Skill sub-tab content ───────────────────────────────────────── */
+/* â”€â”€ Skill sub-tab content â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function skillContent() {
   return `
   <div class="panel" style="margin-top:12px">
     <div class="section-title">Skill Tree</div>
-    <p class="muted text-xs">DSA · Projects · AI — Skill tree coming in Phase 3.</p>
+    <p class="muted text-xs">DSA Â· Projects Â· AI â€” Skill tree coming in Phase 3.</p>
     <p class="muted text-xs" style="margin-top:8px">Use the Focus Timer above to log Skill focus time.</p>
   </div>`;
 }
@@ -111,8 +111,8 @@ export function renderStudy(container, appState, ctx) {
 
     <!-- Sub-tab selector -->
     <div class="study-tabs">
-      <button class="study-tab ${activeSubTab === 'college' ? 'active active-int' : ''}" data-subtab="college">INT · College</button>
-      <button class="study-tab ${activeSubTab === 'skill'   ? 'active active-skl' : ''}" data-subtab="skill">SKL · Skill</button>
+      <button class="study-tab ${activeSubTab === 'college' ? 'active active-int' : ''}" data-subtab="college">INT Â· College</button>
+      <button class="study-tab ${activeSubTab === 'skill'   ? 'active active-skl' : ''}" data-subtab="skill">SKL Â· Skill</button>
     </div>
 
     <!-- Focus Timer panel (always visible) -->
@@ -132,17 +132,17 @@ export function renderStudy(container, appState, ctx) {
 
       <!-- Status line -->
       <p class="muted text-xs text-center" id="timer-status" style="margin:4px 0 12px">
-        ${isRunning ? `[SYSTEM] Focusing — ${timer.pillar.toUpperCase()}` :
-          isPaused  ? '⏸ Paused — tap RESUME to continue' :
+        ${isRunning ? `[SYSTEM] Focusing â€” ${timer.pillar.toUpperCase()}` :
+          isPaused  ? 'â¸ Paused â€” tap RESUME to continue' :
                       'Select pillar and press START'}
       </p>
 
       <!-- Controls -->
       <div class="timer-controls">
         ${!timer.active
-          ? `<button class="btn btn-primary btn-full" id="timer-start">▶ START</button>`
-          : `<button class="btn" id="timer-pause" style="flex:1">${isPaused ? '▶ RESUME' : '⏸ PAUSE'}</button>
-             <button class="btn btn-gold"  id="timer-stop"  style="flex:1">⬛ LOG</button>`
+          ? `<button class="btn btn-primary btn-full" id="timer-start">â–¶ START</button>`
+          : `<button class="btn" id="timer-pause" style="flex:1">${isPaused ? 'â–¶ RESUME' : 'â¸ PAUSE'}</button>
+             <button class="btn btn-gold"  id="timer-stop"  style="flex:1">&#9646; STOP &amp; LOG</button>`
         }
       </div>
     </div>
@@ -174,7 +174,7 @@ function _startDisplayInterval(container) {
   displayInterval = setInterval(() => {
     const el = container.querySelector('#timer-display');
     if (!el) {
-      // Container was replaced — stop the interval
+      // Container was replaced â€” stop the interval
       clearInterval(displayInterval);
       displayInterval = null;
       return;
@@ -209,14 +209,14 @@ function wireStudyEvents(container, appState, ctx) {
     });
   });
 
-  /* ── START ─────────────────────────────────────────────────────── */
+  /* â”€â”€ START â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   container.querySelector('#timer-start')?.addEventListener('click', () => {
     if (timer.active) return;
     timer.active   = true;
     timer.paused   = false;
     timer._startAt = Date.now() - (timer.seconds * 1000);
 
-    // Count interval — updates timer.seconds from wall-clock
+    // Count interval â€” updates timer.seconds from wall-clock
     if (timer._int) clearInterval(timer._int);
     timer._int = setInterval(() => {
       if (!timer.paused) {
@@ -229,7 +229,7 @@ function wireStudyEvents(container, appState, ctx) {
     refresh();
   });
 
-  /* ── PAUSE / RESUME ────────────────────────────────────────────── */
+  /* â”€â”€ PAUSE / RESUME â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   container.querySelector('#timer-pause')?.addEventListener('click', () => {
     if (!timer.active) return;
     if (timer.paused) {
@@ -244,7 +244,7 @@ function wireStudyEvents(container, appState, ctx) {
     refresh();
   });
 
-  /* ── STOP & LOG ────────────────────────────────────────────────── */
+  /* â”€â”€ STOP & LOG â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   container.querySelector('#timer-stop')?.addEventListener('click', () => {
     // Stop all intervals
     if (timer._int)       { clearInterval(timer._int);       timer._int = null; }
@@ -267,7 +267,7 @@ function wireStudyEvents(container, appState, ctx) {
       }
       (result.levelUps ?? []).forEach(lu => showLevelUp(lu.pillar, lu.level));
       if (result.perfectDay) {
-        showToast('[SYSTEM] Perfect Day! ⭐ +100 Hunter XP', 'gold', 5000);
+        showToast('[SYSTEM] Perfect Day! â­ +100 Hunter XP', 'gold', 5000);
         vibrate([50, 30, 100]);
       }
     } else {
@@ -277,7 +277,7 @@ function wireStudyEvents(container, appState, ctx) {
     refresh();
   });
 
-  /* ── Exam management (College sub-tab) ─────────────────────────── */
+  /* â”€â”€ Exam management (College sub-tab) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   container.querySelector('#btn-add-exam')?.addEventListener('click', () => {
     const subjEl = container.querySelector('#exam-subject');
     const dateEl = container.querySelector('#exam-date');
@@ -302,3 +302,6 @@ function wireStudyEvents(container, appState, ctx) {
     });
   });
 }
+
+
+

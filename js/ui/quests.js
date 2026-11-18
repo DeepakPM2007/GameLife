@@ -1,13 +1,16 @@
 /* ================================================================
    js/ui/quests.js — Phase 2: Daily Quest Board
-   Shows 4 pillar quest cards + Penalty Quest + Boss Gate placeholder.
+   Fixes in this version:
+   • Recovery reached-state is SEPARATE from Standard (TIER_RANK bug fixed)
+   • Physical action buttons only show tiers not yet reached on correct path
+   • Misclick protection: confirm modal before every tier log
    ================================================================ */
 
 import {
   getTierForDay, logManualTier, clearPenaltyPillar,
   perfectDayStatus, TIER_XP, FOCUS_THRESH
 } from '../engine.js';
-import { showToast, showLevelUp, vibrate } from './components.js';
+import { showModal, closeModal, showToast, showLevelUp, vibrate } from './components.js';
 import { getToday } from '../store.js';
 
 /* ── Pillar display metadata ─────────────────────────────────────── */
@@ -52,8 +55,67 @@ const TIER_DESC = {
   },
 };
 
-/* ── Tier ordering for comparison ────────────────────────────────── */
-const TIER_RANK = { none: 0, minimum: 1, standard: 2, elite: 3, recovery: 2 };
+/*
+ * FIX: Recovery is an ALTERNATIVE path to Standard for Physical.
+ * We cannot use a simple numeric rank comparison because recovery == standard (rank 2).
+ * Instead we use an explicit logic per tier:
+ *
+ *  currentTier  |  min reached?  std reached?  elite reached?  rec reached?
+ *  -------------|----------------------------------------------------------
+ *  none         |  no            no             no              no
+ *  minimum      |  yes           no             no              no
+ *  standard     |  yes           yes            no              no   ← was broken
+ *  elite        |  yes           yes            yes             no
+ *  recovery     |  yes           no             no              yes
+ */
+function isTierReached(displayTier, currentTier) {
+  if (currentTier === 'none') return false;
+  switch (displayTier) {
+    case 'minimum':  return true; // any non-none means minimum was done or skipped to higher
+    case 'standard': return currentTier === 'standard' || currentTier === 'elite';
+    case 'elite':    return currentTier === 'elite';
+    case 'recovery': return currentTier === 'recovery';
+    default:         return false;
+  }
+}
+
+/* ── Action button visibility logic for Physical ─────────────────── */
+// Which buttons to show depends on which path the user is on.
+// Once Standard/Elite logged: no Recovery button (did real workout).
+// Once Recovery logged: no Minimum/Standard buttons (recovery day).
+function physicalButtons(currentTier) {
+  switch (currentTier) {
+    case 'none':
+      // Show all options
+      return ['minimum', 'recovery', 'standard', 'elite'];
+    case 'minimum':
+      // Did minimum — can upgrade to recovery, standard, or elite
+      return ['recovery', 'standard', 'elite'];
+    case 'recovery':
+      // Recovery day — can still push to elite if feeling good
+      return ['elite'];
+    case 'standard':
+      // Workout done — can upgrade to elite
+      return ['elite'];
+    case 'elite':
+      return []; // all done
+    default:
+      return [];
+  }
+}
+
+/* ── Action button labels ────────────────────────────────────────── */
+const PHYSICAL_BTN_LABELS = {
+  minimum:  '☑ Minimum Done  (10 min mobility)',
+  recovery: '♻ Recovery Quest  (10 min + sleep)',
+  standard: '💪 Full Workout Done',
+  elite:    '🔥 Elite + Finisher Done',
+};
+const SPIRIT_BTN_LABELS = {
+  minimum:  '☑ Check-in Done',
+  standard: '🧘 Check-in + Practice Done',
+  elite:    '📔 Full Spirit Quest Done',
+};
 
 /* ================================================================
    Main render function
@@ -69,10 +131,10 @@ export function renderQuests(container, appState, ctx) {
 
     ${perfectDayBar(perfectCount, perfectDone)}
 
-    ${questCard('college',  appState, dayData, ctx)}
-    ${questCard('skill',    appState, dayData, ctx)}
-    ${questCard('physical', appState, dayData, ctx)}
-    ${questCard('spirit',   appState, dayData, ctx)}
+    ${questCard('college',  appState, dayData)}
+    ${questCard('skill',    appState, dayData)}
+    ${questCard('physical', appState, dayData)}
+    ${questCard('spirit',   appState, dayData)}
 
     ${penaltySection(appState.penalty)}
 
@@ -84,29 +146,39 @@ export function renderQuests(container, appState, ctx) {
 
 /* ── Perfect Day progress bar ────────────────────────────────────── */
 function perfectDayBar(count, done) {
-  const pips = ['college','skill','physical','spirit'].map((p,i) => {
+  const pillars = ['college','skill','physical','spirit'];
+  const pips = pillars.map((p, i) => {
     const lit = i < count;
     const color = { college:'var(--col-int)', skill:'var(--col-skl)', physical:'var(--col-str)', spirit:'var(--col-spi)' }[p];
-    return `<div class="perfect-pip ${lit?'lit':''}" style="${lit?`background:${color};box-shadow:0 0 8px ${color}`:''}" title="${p}"></div>`;
+    return `<div class="perfect-pip ${lit ? 'lit' : ''}" style="${lit ? `background:${color};box-shadow:0 0 8px ${color}` : ''}" title="${p}"></div>`;
   }).join('');
 
   return `
     <div class="panel perfect-day-bar">
       <span class="muted text-xs">PERFECT DAY</span>
       <div class="perfect-pips">${pips}</div>
-      ${done ? '<span class="gold-text text-xs">⭐ ACHIEVED</span>' : `<span class="muted text-xs">${count}/4 pillars</span>`}
+      ${done
+        ? '<span class="gold-text text-xs">⭐ ACHIEVED</span>'
+        : `<span class="muted text-xs">${count}/4 pillars</span>`}
     </div>`;
 }
 
 /* ── Individual quest card ───────────────────────────────────────── */
-function questCard(pillar, appState, dayData, ctx) {
-  const meta      = PILLAR_META[pillar];
-  const tierData  = dayData.tier ?? {};
+function questCard(pillar, appState, dayData) {
+  const meta        = PILLAR_META[pillar];
+  const tierData    = dayData.tier ?? {};
   const currentTier = tierData[pillar] ?? 'none';
-  const isFocus   = pillar === 'college' || pillar === 'skill';
-  const focusMin  = dayData.focusMin ?? {};
-  const mins      = focusMin[pillar] ?? 0;
-  const thresh    = FOCUS_THRESH[pillar] ?? {};
+  const isFocus     = pillar === 'college' || pillar === 'skill';
+  const focusMin    = dayData.focusMin ?? {};
+  const mins        = focusMin[pillar] ?? 0;
+  const thresh      = FOCUS_THRESH[pillar] ?? {};
+
+  // Determine which tier rows to display for this pillar
+  const tierRows = isFocus
+    ? ['minimum', 'standard', 'elite']
+    : pillar === 'physical'
+      ? ['minimum', 'standard', 'elite', 'recovery']
+      : ['minimum', 'standard', 'elite'];
 
   return `
   <div class="panel quest-card quest-card--${meta.cls}">
@@ -121,10 +193,7 @@ function questCard(pillar, appState, dayData, ctx) {
     ${isFocus ? focusProgressBar(mins, thresh, currentTier) : ''}
 
     <div class="quest-tiers">
-      ${tierRow('minimum',  pillar, currentTier)}
-      ${tierRow('standard', pillar, currentTier)}
-      ${tierRow('elite',    pillar, currentTier)}
-      ${pillar === 'physical' ? tierRow('recovery', pillar, currentTier) : ''}
+      ${tierRows.map(t => tierRow(t, pillar, currentTier)).join('')}
     </div>
 
     <div class="quest-actions">
@@ -140,7 +209,7 @@ function focusProgressBar(mins, thresh, currentTier) {
   const stdPct = Math.round(((thresh.standard ?? 90) / max) * 100);
   const pct    = Math.min(100, Math.round((mins / max) * 100));
 
-  const barColor = currentTier === 'elite' ? 'var(--gold)' :
+  const barColor = currentTier === 'elite'    ? 'var(--gold)' :
                    currentTier === 'standard' ? 'var(--col-int)' :
                    currentTier === 'minimum'  ? '#38bdf877' : 'var(--muted)';
 
@@ -148,8 +217,8 @@ function focusProgressBar(mins, thresh, currentTier) {
   <div class="focus-bar-wrap">
     <div class="focus-bar-track">
       <div class="focus-bar-fill" style="width:${pct}%;background:${barColor}"></div>
-      <div class="focus-threshold" style="left:${minPct}%" title="Min"></div>
-      <div class="focus-threshold" style="left:${stdPct}%" title="Std"></div>
+      <div class="focus-threshold" style="left:${minPct}%" title="Min ${thresh.minimum ?? 25}min"></div>
+      <div class="focus-threshold" style="left:${stdPct}%" title="Std ${thresh.standard ?? 90}min"></div>
     </div>
     <div class="focus-bar-label">
       <span class="mono text-xs" style="color:var(--glow)">${mins} min</span>
@@ -158,9 +227,9 @@ function focusProgressBar(mins, thresh, currentTier) {
   </div>`;
 }
 
-/* One tier row (shows XP and reached state) */
+/* One tier row — uses isTierReached() to avoid Recovery/Standard bleed */
 function tierRow(tier, pillar, currentTier) {
-  const reached = TIER_RANK[currentTier] >= TIER_RANK[tier];
+  const reached = isTierReached(tier, currentTier);
   const desc    = TIER_DESC[pillar]?.[tier] ?? '';
   const xp      = TIER_META[tier]?.xp ?? 0;
   const label   = TIER_META[tier]?.label ?? tier;
@@ -181,29 +250,32 @@ function questActions(pillar, currentTier, isFocus) {
   if (isFocus) {
     return `<button class="btn btn-primary quest-btn" data-nav="study">⏱ Open Focus Timer</button>`;
   }
+
   if (pillar === 'physical') {
-    const tiers = ['minimum','recovery','standard','elite'];
-    return tiers.map(tier => {
-      const reached = TIER_RANK[currentTier] >= TIER_RANK[tier];
-      const label = tier === 'recovery' ? '♻ Recovery Quest' :
-                    tier === 'minimum'  ? '☑ Minimum Done' :
-                    tier === 'standard' ? '💪 Full Workout Done' :
-                                         '🔥 Elite + Finisher Done';
-      return reached ? '' :
-        `<button class="btn quest-btn tier-btn--${tier}" data-log="physical" data-tier="${tier}">${label}</button>`;
-    }).filter(Boolean).join('') || `<span class="muted text-xs text-center">✓ All done for today</span>`;
+    const toShow = physicalButtons(currentTier);
+    if (!toShow.length) return `<span class="muted text-xs text-center">✓ All done for today</span>`;
+    return toShow.map(tier =>
+      `<button class="btn quest-btn tier-btn--${tier}"
+               data-log="physical" data-tier="${tier}"
+               data-confirm-label="${PHYSICAL_BTN_LABELS[tier]}">
+        ${PHYSICAL_BTN_LABELS[tier]}
+      </button>`
+    ).join('');
   }
+
   if (pillar === 'spirit') {
-    const tiers = ['minimum','standard','elite'];
-    return tiers.map(tier => {
-      const reached = TIER_RANK[currentTier] >= TIER_RANK[tier];
-      const label = tier === 'minimum'  ? '☑ Check-in Done' :
-                    tier === 'standard' ? '🧘 Check-in + Practice Done' :
-                                         '📔 Full Spirit Quest Done';
-      return reached ? '' :
-        `<button class="btn quest-btn tier-btn--${tier}" data-log="spirit" data-tier="${tier}">${label}</button>`;
-    }).filter(Boolean).join('') || `<span class="muted text-xs text-center">✓ All done for today</span>`;
+    const tiers = ['minimum', 'standard', 'elite'];
+    const toShow = tiers.filter(t => !isTierReached(t, currentTier));
+    if (!toShow.length) return `<span class="muted text-xs text-center">✓ All done for today</span>`;
+    return toShow.map(tier =>
+      `<button class="btn quest-btn tier-btn--${tier}"
+               data-log="spirit" data-tier="${tier}"
+               data-confirm-label="${SPIRIT_BTN_LABELS[tier]}">
+        ${SPIRIT_BTN_LABELS[tier]}
+      </button>`
+    ).join('');
   }
+
   return '';
 }
 
@@ -224,8 +296,12 @@ function penaltySection(penalty) {
         You missed ${meta.name} yesterday. Clear by completing one of:
       </p>
       <div class="quest-actions">
-        <button class="btn btn-danger quest-btn" data-clear-penalty="${p}" data-choice="pushups">✓ 40 Pushups Done</button>
-        <button class="btn quest-btn" data-clear-penalty="${p}" data-choice="focus">✓ 20 min Focus Done</button>
+        <button class="btn btn-danger quest-btn" data-clear-penalty="${p}" data-choice="pushups">
+          ✓ 40 Pushups Done
+        </button>
+        <button class="btn quest-btn" data-clear-penalty="${p}" data-choice="focus">
+          ✓ 20 min Focus Done
+        </button>
       </div>
     </div>`;
   }).join('');
@@ -246,9 +322,9 @@ function bossCard() {
 }
 
 /* ================================================================
-   XP result handler (shared)
+   XP result handler
    ================================================================ */
-function handleXPResult(result, appState, ctx) {
+function handleXPResult(result) {
   if (result.xpAdded > 0) {
     showToast(`+${result.xpAdded} XP`, 'gold');
     vibrate([30]);
@@ -261,34 +337,66 @@ function handleXPResult(result, appState, ctx) {
 }
 
 /* ================================================================
+   Confirm modal before logging a tier (misclick protection)
+   ================================================================ */
+function confirmTierLog(pillarName, label, onConfirm) {
+  showModal({
+    title: '[SYSTEM] Confirm Quest Log',
+    body: `
+      <p style="margin:0 0 12px; color:var(--text);">
+        Log quest for <strong>${pillarName}</strong>?
+      </p>
+      <div class="panel" style="padding:10px 14px; margin-bottom:4px; border-color:var(--gold);">
+        <span style="color:var(--gold); font-size:0.9rem;">${label}</span>
+      </div>
+      <p class="muted text-xs" style="margin-top:8px;">
+        This cannot be undone today. Make sure you actually completed it.
+      </p>`,
+    buttons: [
+      {
+        label: '✓ Confirm',
+        cls:   'btn-primary',
+        onClick() { closeModal(); onConfirm(); },
+      },
+      {
+        label: '✕ Cancel',
+        cls:   '',
+        onClick() { closeModal(); },
+      },
+    ],
+    closeable: true,
+  });
+}
+
+/* ================================================================
    Event wiring
    ================================================================ */
 function wireQuestEvents(container, appState, ctx) {
-  const refresh = () => {
-    const today   = getToday();
-    const dayData = appState.days[today] ?? {};
-    const { count, done } = perfectDayStatus(dayData);
-    renderQuests(container, appState, ctx);
-  };
+  const refresh = () => renderQuests(container, appState, ctx);
 
-  // Manual tier log buttons (physical + spirit)
+  /* Manual tier log buttons (physical + spirit) */
   container.querySelectorAll('[data-log]').forEach(btn => {
     btn.addEventListener('click', () => {
-      const pillar = btn.dataset.log;
-      const tier   = btn.dataset.tier;
-      const result = logManualTier(appState, pillar, tier);
-      handleXPResult(result, appState, ctx);
-      ctx.persist();
-      refresh();
+      const pillar     = btn.dataset.log;
+      const tier       = btn.dataset.tier;
+      const label      = btn.dataset.confirmLabel || tier;
+      const pillarName = PILLAR_META[pillar]?.name ?? pillar;
+
+      confirmTierLog(pillarName, label, () => {
+        const result = logManualTier(appState, pillar, tier);
+        handleXPResult(result);
+        ctx.persist();
+        refresh();
+      });
     });
   });
 
-  // Open Focus Timer (navigates to study tab)
+  /* Open Focus Timer (navigates to study tab) */
   container.querySelectorAll('[data-nav]').forEach(btn => {
     btn.addEventListener('click', () => ctx.navigate('#' + btn.dataset.nav));
   });
 
-  // Clear penalty buttons
+  /* Clear penalty buttons */
   container.querySelectorAll('[data-clear-penalty]').forEach(btn => {
     btn.addEventListener('click', () => {
       clearPenaltyPillar(appState, btn.dataset.clearPenalty);
