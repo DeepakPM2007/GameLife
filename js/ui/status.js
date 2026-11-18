@@ -97,8 +97,8 @@ export function renderStatus(container, appState) {
     <!-- ── Exam countdown (if any exams added) ───────────────── -->
     ${exam ? examPanel(exam) : ''}
 
-    <!-- ── Penalty banner (if active) ────────────────────────── -->
-    ${appState.penalty.active ? penaltyBanner(appState.penalty) : ''}
+    <!-- ── Penalty banner(s) — one per missed pillar ────────── -->
+    ${penaltySection(appState.penalty)}
 
     <!-- ── Data management (settings shortcut) ───────────────── -->
     <div class="panel">
@@ -284,17 +284,40 @@ function examPanel(exam) {
     </div>`;
 }
 
-/* ── Penalty banner ─────────────────────────────────────────── */
-function penaltyBanner(penalty) {
-  const pillarName = PILLAR_META[penalty.pillar]?.name ?? penalty.pillar;
+/* ── Penalty section — one banner card per missed pillar ───── */
+function penaltySection(penalty) {
+  if (!penalty?.active) return '';
+
+  // Support both old shape (pillar: string) and new shape (pillars: array)
+  const list = Array.isArray(penalty.pillars) && penalty.pillars.length
+    ? penalty.pillars
+    : (penalty.pillar ? [penalty.pillar] : []);
+
+  if (!list.length) return '';
+
+  return list.map(pillar => penaltyBanner(pillar, penalty.type)).join('');
+}
+
+/* ── Single penalty banner ─────────────────────────────────── */
+function penaltyBanner(pillar, type = 'pushups') {
+  const meta       = PILLAR_META[pillar] ?? {};
+  const pillarName = meta.name ?? pillar;
+  const cls        = meta.cls  ?? '';
+  const action     = type === 'focus'
+    ? `20 min focus (${pillarName})`
+    : '40 pushups (split any way)';
+
   return `
     <div class="panel penalty-banner">
-      <div class="system-label">[PENALTY QUEST ACTIVE]</div>
-      <p style="font-size:.875rem;margin-bottom:6px;">
-        <strong>${pillarName}</strong> pillar was not completed yesterday.
-      </p>
+      <div class="system-label">[PENALTY QUEST · ${(meta.stat ?? pillar.toUpperCase())}]</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <span class="tier-badge tier-none" style="border-color:var(--danger);color:var(--danger);">MISSED</span>
+        <strong class="text-${cls}">${pillarName} Pillar</strong>
+        <span class="muted text-xs">— not completed yesterday</span>
+      </div>
       <p class="muted text-xs">
-        Clear in the Quests tab: 40 pushups OR 20 min focus in ${pillarName}.
+        Clear in Quests tab → <strong style="color:var(--text);">${action}</strong>
+        OR <strong style="color:var(--text);">20 min focus in ${pillarName}</strong>.
         Earns 0 XP — just clears the badge.
       </p>
     </div>`;

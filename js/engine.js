@@ -290,16 +290,24 @@ export function rollover(state) {
     }
   }
 
-  /* ── Penalty: check the most recently completed day ──────── */
+  /* ── Penalty: recalculate from the most recently completed day ─ */
+  // Always recalculate (no !active guard) so re-opens stay accurate.
+  // Collect EVERY pillar that missed on the last completed day.
   const lastDate = completed.at(-1);
-  if (lastDate && !state.penalty.active) {
-    const dayData = state.days[lastDate] ?? defaultDay();
-    for (const pillar of PILLARS) {
-      if (getTierForDay(dayData, pillar) === 'none') {
-        // First missed pillar sets the penalty
-        state.penalty = { active: true, pillar, type: 'pushups' };
-        break;
-      }
+  if (lastDate) {
+    const lastDayData   = state.days[lastDate] ?? defaultDay();
+    const missedPillars = PILLARS.filter(p => getTierForDay(lastDayData, p) === 'none');
+
+    if (missedPillars.length > 0) {
+      state.penalty = {
+        active:  true,
+        pillars: missedPillars,          // ALL missed pillars shown as separate banners
+        pillar:  missedPillars[0],       // kept for backward-compat
+        type:    'pushups',
+      };
+    } else {
+      // Yesterday everything was completed — clear any old penalty
+      state.penalty = { active: false, pillars: [], pillar: '', type: '' };
     }
   }
 

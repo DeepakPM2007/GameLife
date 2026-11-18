@@ -96,9 +96,10 @@ function defaultState() {
     },
 
     penalty: {
-      active: false,
-      pillar: '',       // which pillar triggered it
-      type:   '',       // 'pushups' | 'focus'
+      active:  false,
+      pillars: [],      // ALL pillars that missed yesterday (array)
+      pillar:  '',      // kept for backward-compat (first missed pillar)
+      type:    '',      // 'pushups' | 'focus'
     },
   };
 }
@@ -131,7 +132,13 @@ function mergeDefaults(state, defaults) {
  */
 function migrate(raw) {
   if (!raw.schemaVersion) raw.schemaVersion = 1;
-  // Future: if (raw.schemaVersion < 2) { ... raw.schemaVersion = 2; }
+
+  // Phase 1 → 1.1: penalty.pillar (string) → penalty.pillars (array)
+  // Additive change; keeps pillar string for backward compat.
+  if (raw.penalty && !Array.isArray(raw.penalty.pillars)) {
+    raw.penalty.pillars = raw.penalty.pillar ? [raw.penalty.pillar] : [];
+  }
+
   return raw;
 }
 
