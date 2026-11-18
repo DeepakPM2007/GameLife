@@ -1,7 +1,7 @@
 ﻿/* sw.js â€” Cache-first service worker for ARISE
    Bump CACHE constant whenever you deploy new code to force refresh. */
 
-const CACHE = 'arise-v5';   // â† bump on every deploy
+const CACHE = 'arise-v6';   // â† bump on every deploy
 
 /* Core files: must all cache successfully on install. */
 const CORE_FILES = [
