@@ -781,3 +781,334 @@ h3 { font-size: 1rem;   }
   0%, 100% { box-shadow: 0 0 10px rgba(239,68,68,.2); }
   50%       { box-shadow: 0 0 24px rgba(239,68,68,.5); }
 }
+
+
+/* ================================================================
+   PHASE 2 — Quest Board + Focus Timer + Study UI
+   ================================================================ */
+
+/* ── Quest Board ─────────────────────────────────────────────────── */
+.quest-date {
+  text-align: center;
+  font-family: 'Orbitron', monospace;
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-bottom: 12px;
+  letter-spacing: 0.08em;
+}
+
+/* Perfect Day bar */
+.perfect-day-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+.perfect-pips {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+  justify-content: center;
+}
+.perfect-pip {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line);
+  background: var(--bg);
+  transition: background 0.3s, box-shadow 0.3s;
+}
+.perfect-pip.lit { border-color: transparent; }
+.gold-text { color: var(--gold); font-weight: 700; }
+
+/* Quest card */
+.quest-card {
+  margin-bottom: 12px;
+  border-left: 3px solid var(--line);
+}
+.quest-card--int { border-left-color: var(--col-int); }
+.quest-card--skl { border-left-color: var(--col-skl); }
+.quest-card--str { border-left-color: var(--col-str); }
+.quest-card--spi { border-left-color: var(--col-spi); }
+
+.quest-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.quest-stat-badge {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+}
+.quest-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  flex: 1;
+}
+.quest-tier-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 2px 8px;
+  border-radius: 2px;
+  text-transform: uppercase;
+}
+.tier--minimum  { background: rgba(56,189,248,.15);  color: var(--col-int); border: 1px solid var(--col-int); }
+.tier--standard { background: rgba(251,191,36,.15);  color: var(--gold);    border: 1px solid var(--gold);    }
+.tier--elite    { background: rgba(167,139,250,.15); color: var(--col-skl); border: 1px solid var(--col-skl); }
+.tier--recovery { background: rgba(74,222,128,.15);  color: #4ade80;        border: 1px solid #4ade80;        }
+
+/* Focus progress bar */
+.focus-bar-wrap { margin-bottom: 12px; }
+.focus-bar-track {
+  position: relative;
+  width: 100%;
+  height: 8px;
+  background: var(--line);
+  border-radius: 4px;
+  overflow: visible;
+}
+.focus-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+.focus-threshold {
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 14px;
+  background: var(--muted);
+  border-radius: 1px;
+  opacity: 0.6;
+}
+.focus-bar-label {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+/* Quest tier rows */
+.quest-tiers { margin-bottom: 10px; }
+.quest-tier-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(30,58,95,.4);
+  opacity: 0.55;
+  transition: opacity 0.2s;
+}
+.quest-tier-row:last-child { border-bottom: none; }
+.quest-tier-row.reached { opacity: 1; }
+.tier-check {
+  font-size: 0.85rem;
+  color: var(--muted);
+  min-width: 16px;
+  line-height: 1.6;
+}
+.quest-tier-row.reached .tier-check { color: #4ade80; }
+.tier-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.tier-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.tier-xp {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.72rem;
+  color: var(--gold);
+  font-weight: 700;
+  min-width: 56px;
+  text-align: right;
+  line-height: 1.6;
+}
+
+/* Quest action buttons */
+.quest-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.quest-btn {
+  min-height: 44px;
+  font-size: 0.85rem;
+  text-align: left;
+  padding: 10px 14px;
+}
+.tier-btn--elite    { border-color: var(--col-skl); color: var(--col-skl); }
+.tier-btn--standard { border-color: var(--gold);    color: var(--gold);    }
+.tier-btn--recovery { border-color: #4ade80;        color: #4ade80;        }
+
+/* Penalty section */
+.penalty-section { margin-bottom: 12px; }
+.penalty-card {
+  border-color: var(--danger);
+  box-shadow: 0 0 14px rgba(239,68,68,.2);
+  animation: glowDanger 2s ease infinite;
+  margin-bottom: 10px;
+}
+
+/* Boss gate */
+.boss-card {
+  margin-bottom: 24px;
+  opacity: 0.6;
+}
+.boss-locked {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+}
+.boss-icon { font-size: 1.5rem; }
+
+/* ── Study / Focus Timer ─────────────────────────────────────────── */
+.study-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.study-tab {
+  flex: 1;
+  min-height: 44px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.04em;
+}
+.study-tab:hover { color: var(--text); border-color: var(--muted); }
+.study-tab.active-int { border-color: var(--col-int); color: var(--col-int); background: rgba(56,189,248,.08); }
+.study-tab.active-skl { border-color: var(--col-skl); color: var(--col-skl); background: rgba(167,139,250,.08); }
+
+/* Timer pillar selector */
+.timer-pillar-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.timer-pillar-btn {
+  flex: 1;
+  min-height: 36px;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.timer-pillar-btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+.timer-pillar-btn.active-int { border-color: var(--col-int); color: var(--col-int); background: rgba(56,189,248,.1); }
+.timer-pillar-btn.active-skl { border-color: var(--col-skl); color: var(--col-skl); background: rgba(167,139,250,.1); }
+
+/* Timer big display */
+.timer-display {
+  font-family: 'Orbitron', monospace;
+  font-size: 3.5rem;
+  font-weight: 900;
+  text-align: center;
+  color: var(--glow);
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 24px rgba(56,189,248,.5);
+  margin: 8px 0;
+  line-height: 1;
+}
+
+/* Timer controls */
+.timer-controls {
+  display: flex;
+  gap: 8px;
+}
+
+/* Focus summary in Study screen */
+.study-summary-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.study-mini-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--line);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.study-mini-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+/* Exam list */
+.exam-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(30,58,95,.4);
+}
+.exam-item:last-of-type { border-bottom: none; }
+.exam-info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.exam-name  { font-size: 0.88rem; font-weight: 600; }
+.exam-date  { font-size: 0.72rem; }
+.exam-countdown { font-family: 'Orbitron', monospace; min-width: 40px; text-align: right; }
+.exam-countdown.urgent { color: var(--gold); }
+
+/* Add exam form */
+.add-exam-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.text-input {
+  width: 100%;
+  min-height: 44px;
+  background: rgba(30,58,95,.3);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 0.9rem;
+  padding: 10px 12px;
+  box-sizing: border-box;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+.text-input:focus {
+  outline: none;
+  border-color: var(--glow);
+  box-shadow: 0 0 8px rgba(56,189,248,.15);
+}
+.text-input::placeholder { color: var(--muted); }
+
+/* colour-scheme fix for date picker on dark backgrounds */
+.text-input[type="date"] { color-scheme: dark; }
+
+/* Utility */
+.text-center { text-align: center; }
+.btn-full    { width: 100%; text-align: center; }
+.btn-gold    {
+  background: rgba(251,191,36,.15);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.btn-gold:hover { background: rgba(251,191,36,.25); }
+.mt-8 { margin-top: 8px; }

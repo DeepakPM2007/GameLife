@@ -351,3 +351,144 @@ function fmt(d) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 function pad(n) { return String(n).padStart(2, '0'); }
+
+/* ================================================================
+   PHASE 2 — New engine exports
+   logFocusMinutes · logManualTier · clearPenaltyPillar · logSleep
+   ================================================================ */
+
+/** XP awarded per tier (absolute). Incremental award = newXP - prevXP. */
+export const TIER_XP = { none: 0, minimum: 40, standard: 80, elite: 150, recovery: 80 };
+
+/**
+ * Add focus minutes to college or skill; auto-compute tier upgrade;
+ * award incremental XP.  Call after every Focus Timer session.
+ *
+ * @param {object} state
+ * @param {'college'|'skill'} pillar
+ * @param {number} minutes  – whole minutes to add
+ * @returns {{ xpAdded, levelUps, tierChanged, perfectDay, newTier, totalMin }}
+ */
+export function logFocusMinutes(state, pillar, minutes) {
+  if (minutes <= 0) {
+    return { xpAdded: 0, levelUps: [], tierChanged: false, perfectDay: false, newTier: 'none', totalMin: 0 };
+  }
+
+  const today   = getToday();
+  const dayData = state.days[today];
+
+  const prevTier = getTierForDay(dayData, pillar);
+
+  // Accumulate
+  dayData.focusMin[pillar] = (dayData.focusMin[pillar] || 0) + minutes;
+  const totalMin = dayData.focusMin[pillar];
+
+  // Compute new tier
+  const newTier  = _focusTier(totalMin, pillar);
+  dayData.tier[pillar] = newTier;
+
+  return { ..._awardIncremental(state, pillar, prevTier, newTier, today), newTier, totalMin };
+}
+
+/**
+ * Log a manual tier for physical or spirit.
+ * Only upgrades — can't reduce a day's tier.
+ *
+ * @param {object} state
+ * @param {'physical'|'spirit'} pillar
+ * @param {'minimum'|'standard'|'recovery'|'elite'} tier
+ * @returns {{ xpAdded, levelUps, tierChanged, perfectDay, newTier }}
+ */
+export function logManualTier(state, pillar, tier) {
+  const today   = getToday();
+  const dayData = state.days[today];
+
+  const prevTier = getTierForDay(dayData, pillar);
+  const prevXP   = TIER_XP[prevTier] ?? 0;
+  const newXP    = TIER_XP[tier]     ?? 0;
+
+  if (newXP <= prevXP) {
+    return { xpAdded: 0, levelUps: [], tierChanged: false, perfectDay: false, newTier: prevTier };
+  }
+
+  // For Recovery Quest, store as 'standard' for consistency
+  const storedTier = tier === 'recovery' ? 'standard' : tier;
+  dayData.tier[pillar] = storedTier;
+
+  return { ..._awardIncremental(state, pillar, prevTier, storedTier, today), newTier: storedTier };
+}
+
+/**
+ * Remove one pillar from the active penalty list.
+ * When all pillars are cleared, penalty becomes inactive.
+ */
+export function clearPenaltyPillar(state, pillar) {
+  const p    = state.penalty;
+  const list = Array.isArray(p.pillars) && p.pillars.length
+    ? p.pillars
+    : (p.pillar ? [p.pillar] : []);
+  const remaining = list.filter(x => x !== pillar);
+  state.penalty = {
+    active:  remaining.length > 0,
+    pillars: remaining,
+    pillar:  remaining[0] || '',
+    type:    p.type || 'pushups',
+  };
+}
+
+/**
+ * Log sleep hours for today; adjusts stamina immediately.
+ * Sleep ≥7h → +20 stamina. Sleep <5h → cap at 70.
+ */
+export function logSleep(state, hours) {
+  const today = getToday();
+  state.days[today].sleepHours = hours;
+
+  if (hours < STAMINA.sleepLowHours) {
+    state.stamina.value = Math.min(state.stamina.value, STAMINA.sleepCap);
+  } else if (hours >= 7) {
+    state.stamina.value = Math.min(STAMINA.max, state.stamina.value + STAMINA.sleepBonus);
+  }
+  state.stamina.updatedAt = new Date().toISOString();
+}
+
+/* ── Phase 2 internal helpers ───────────────────────────────── */
+
+/** Compute tier from focus minutes for a given pillar. */
+function _focusTier(mins, pillar) {
+  const t = FOCUS_THRESH[pillar];
+  if (!t) return 'none';
+  if (mins >= t.elite)    return 'elite';
+  if (mins >= t.standard) return 'standard';
+  if (mins >= t.minimum)  return 'minimum';
+  return 'none';
+}
+
+/**
+ * Award incremental XP when tier upgrades; check Perfect Day.
+ * Returns { xpAdded, levelUps, tierChanged, perfectDay }.
+ */
+function _awardIncremental(state, pillar, prevTier, newTier, today) {
+  const prevXP = TIER_XP[prevTier] ?? 0;
+  const newXP  = TIER_XP[newTier]  ?? 0;
+
+  if (newXP <= prevXP) {
+    return { xpAdded: 0, levelUps: [], tierChanged: false, perfectDay: false };
+  }
+
+  const { xpAdded, levelUps } = addXp(state, pillar, newXP - prevXP);
+
+  // Perfect Day: all 4 pillars at Standard+ in one day
+  let perfectDay = false;
+  const { done } = perfectDayStatus(state.days[today]);
+  if (done && !state.days[today].perfect) {
+    state.days[today].perfect = true;
+    perfectDay = true;
+    // Award bonus XP to all pillars
+    for (const p of PILLARS) {
+      addXp(state, p, PERFECT_DAY_BONUS_PER_PILLAR);
+    }
+  }
+
+  return { xpAdded, levelUps, tierChanged: true, perfectDay };
+}

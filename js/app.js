@@ -1,6 +1,6 @@
 /* ================================================================
    js/app.js — Boot and hash router for ARISE
-   Imports screen renderers; each renderer receives (container, state).
+   Phase 2: Added ctx object passed to quests + study renderers.
    ================================================================ */
 
 import { loadState, saveState, ensureTodayEntry } from './store.js';
@@ -11,7 +11,7 @@ import { renderTrain   } from './ui/train.js';
 import { renderStudy   } from './ui/study.js';
 import { renderSpirit  } from './ui/spirit.js';
 
-/* ── Service Worker registration ────────────────────────────────── */
+/* ── Service Worker registration ─────────────────────────────────── */
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
@@ -19,7 +19,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-/* ── App-wide mutable state ─────────────────────────────────────── */
+/* ── App-wide mutable state ──────────────────────────────────────── */
 // All screens read and mutate this single object.
 // Call persist() after any mutation.
 export let state = null;
@@ -29,10 +29,10 @@ export function persist() {
   saveState(state);
 }
 
-/* ── Valid tab names ────────────────────────────────────────────── */
+/* ── Valid tab names ─────────────────────────────────────────────── */
 const TABS = ['status', 'quests', 'train', 'study', 'spirit'];
 
-/* ── Boot ───────────────────────────────────────────────────────── */
+/* ── Boot ────────────────────────────────────────────────────────── */
 function boot() {
   // Load (or create fresh) state
   state = loadState();
@@ -49,7 +49,7 @@ function boot() {
   navigate(location.hash || '#status');
 }
 
-/* ── Router ─────────────────────────────────────────────────────── */
+/* ── Router ──────────────────────────────────────────────────────── */
 function setupRouter() {
   // Nav button clicks
   document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -65,6 +65,7 @@ function setupRouter() {
 /**
  * Navigate to a tab by hash string (e.g. "#quests").
  * Updates history, active nav highlight, and renders the screen.
+ * ctx is passed to screens that need to mutate state (quests, study).
  * @param {string} hash
  */
 export function navigate(hash) {
@@ -91,12 +92,15 @@ export function navigate(hash) {
   const content = document.getElementById('screen-content');
   content.scrollTop = 0; // scroll to top on each tab switch
 
+  // ctx lets screens call persist() and navigate() without circular imports
+  const ctx = { persist, navigate };
+
   switch (tab) {
-    case 'status':  renderStatus(content, state);  break;
-    case 'quests':  renderQuests(content, state);  break;
-    case 'train':   renderTrain(content, state);   break;
-    case 'study':   renderStudy(content, state);   break;
-    case 'spirit':  renderSpirit(content, state);  break;
+    case 'status':  renderStatus(content, state);        break;
+    case 'quests':  renderQuests(content, state, ctx);   break;
+    case 'train':   renderTrain(content, state);         break;
+    case 'study':   renderStudy(content, state, ctx);    break;
+    case 'spirit':  renderSpirit(content, state);        break;
   }
 }
 

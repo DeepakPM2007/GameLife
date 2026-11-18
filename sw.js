@@ -1,7 +1,7 @@
-/* sw.js — Cache-first service worker for ARISE
+﻿/* sw.js â€” Cache-first service worker for ARISE
    Bump CACHE constant whenever you deploy new code to force refresh. */
 
-const CACHE = 'arise-v3';   // ← bump on every deploy
+const CACHE = 'arise-v4';   // â† bump on every deploy
 
 /* Core files: must all cache successfully on install. */
 const CORE_FILES = [
@@ -31,7 +31,7 @@ const OPTIONAL_FILES = [
   './icons/icon-512-maskable.png',
 ];
 
-/* ── Install ─ precache app shell ─────────────────────────────── */
+/* â”€â”€ Install â”€ precache app shell â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE).then(async cache => {
@@ -48,7 +48,7 @@ self.addEventListener('install', event => {
   self.skipWaiting(); // activate immediately
 });
 
-/* ── Activate ─ delete stale caches ──────────────────────────── */
+/* â”€â”€ Activate â”€ delete stale caches â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -58,7 +58,7 @@ self.addEventListener('activate', event => {
   self.clients.claim(); // take control of all open tabs
 });
 
-/* ── Fetch ─ cache-first, network fallback ────────────────────── */
+/* â”€â”€ Fetch â”€ cache-first, network fallback â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return; // skip non-GET
 
@@ -76,10 +76,11 @@ self.addEventListener('fetch', event => {
         return response;
       });
     }).catch(() => {
-      // Completely offline — serve index.html for navigation requests
+      // Completely offline â€” serve index.html for navigation requests
       if (event.request.mode === 'navigate') {
         return caches.match('./index.html');
       }
     })
   );
 });
+
